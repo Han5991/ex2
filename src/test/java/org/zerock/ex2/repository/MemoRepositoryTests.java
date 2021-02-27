@@ -7,8 +7,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.test.annotation.Commit;
 import org.zerock.ex2.entity.Memo;
 
+import javax.transaction.Transactional;
+import java.beans.Transient;
+import java.util.List;
 import java.util.stream.IntStream;
 
 @SpringBootTest
@@ -58,19 +62,45 @@ public class MemoRepositoryTests {
         System.out.println("first page " + result.isFirst()); // 시작 페이지(0)여부
 
         System.out.println("-----------------------------");
-        for(Memo memo : result.getContent()){
+        for (Memo memo : result.getContent()) {
             System.out.println(memo);
         }
     }
+
     @Test
-    public void testSort(){
+    public void testSort() {
         Sort sort1 = Sort.by("mno").descending();
         Sort sort2 = Sort.by("memoText").ascending();
         Sort sortAll = sort1.and(sort2);
-        Pageable pageable = PageRequest.of(0,10,sortAll);
+        Pageable pageable = PageRequest.of(0, 10, sortAll);
         Page<Memo> result = memoRepository.findAll(pageable);
         result.get().forEach(memo -> {
             System.out.println(memo);
         });
+    }
+
+    @Test
+    public void testQueryMethods() {
+        List<Memo> list = memoRepository.findByMnoBetweenOrderByMnoDesc(70L, 80L);
+        for (Memo memo : list) {
+            System.out.println(memo);
+        }
+    }
+
+    @Test
+    public void testQueryMethodWithPageable() {
+        Pageable pageable = PageRequest.of(0, 10, Sort.by("mno").descending());
+        Page<Memo> result = memoRepository.findByMnoBetween(10L, 50L, pageable);
+//        result.get().forEach(memo -> System.out.println(memo));
+        for (Memo memo : result) {
+            System.out.println(memo);
+        }
+    }
+
+    @Commit
+    @Transactional
+    @Test
+    public void testDeleteQueryMethods(){
+        memoRepository.deleteMemoByMnoLessThan(10L);
     }
 }
